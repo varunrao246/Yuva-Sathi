@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
       deepLink,
       isConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN),
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Failed to generate link token' }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to generate link token';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

@@ -84,7 +84,7 @@ export function SavingsManager({
       </div>
 
       {/* Aggregate Overview Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-[#FAF7F0] rounded-xl border border-[#E9E1D3]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-[#FAF7F0] rounded-xl border border-[#E9E1D3]">
         <div>
           <span className="text-[11px] text-gray-500 font-medium">Total Saved in Goals</span>
           <p className="text-xl font-bold text-forest-900">
@@ -96,6 +96,13 @@ export function SavingsManager({
           <span className="text-[11px] text-gray-500 font-medium">Target Goals Total</span>
           <p className="text-xl font-bold text-charcoal-900">
             {formatINR(financials.targetSavingsTotal)}
+          </p>
+        </div>
+
+        <div>
+          <span className="text-[11px] text-gray-500 font-medium">Planned This Month</span>
+          <p className="text-xl font-bold text-emerald-800">
+            {formatINR(financials.plannedSavingsMonthly)}
           </p>
         </div>
 
@@ -117,12 +124,14 @@ export function SavingsManager({
             <span className="text-xs font-bold text-forest-900">
               {financials.targetSavingsTotal > 0
                 ? Math.round((financials.totalSavedInGoals / financials.targetSavingsTotal) * 100)
-                : 0}
-              %
+                : 0}%
             </span>
           </div>
         </div>
       </div>
+      <p className="text-[11px] text-gray-500 italic -mt-3">
+        💡 Note: Goal targets are aspirational targets. Yuva Sathi never subtracts your entire goal target from your monthly spending money. Only your planned monthly contribution ({formatINR(financials.plannedSavingsMonthly)}) is reserved.
+      </p>
 
       {/* Goals Cards Grid */}
       {savingsGoals.length === 0 ? (
@@ -164,29 +173,34 @@ export function SavingsManager({
                     </button>
                   </div>
 
-                  {/* Amounts */}
-                  <div className="flex items-baseline justify-between mt-3 mb-1">
-                    <span className="text-xs text-gray-500 font-medium">Saved:</span>
-                    <span className="text-sm font-bold text-forest-900">
-                      {formatINR(goal.currentSavings)} / {formatINR(goal.targetAmount)}
-                    </span>
+                  {/* Structured Goal Metrics */}
+                  <div className="grid grid-cols-2 gap-2 my-3 p-2.5 bg-white rounded-xl border border-[#E9E1D3] text-xs">
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Target:</span>
+                      <span className="font-bold text-charcoal-900">{formatINR(goal.targetAmount)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Saved:</span>
+                      <span className="font-bold text-forest-800">{formatINR(goal.currentSavings)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Remaining:</span>
+                      <span className="font-semibold text-charcoal-700">{formatINR(remaining)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Progress:</span>
+                      <span className="font-bold text-forest-900">{pct}%</span>
+                    </div>
                   </div>
 
                   {/* Progress bar */}
-                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-2">
+                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-3">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         pct >= 100 ? 'bg-forest-600' : 'bg-lime-500'
                       }`}
                       style={{ width: `${pct}%` }}
                     />
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] text-gray-500 mb-4">
-                    <span>{pct}% reached</span>
-                    <span className="font-semibold text-charcoal-800">
-                      {remaining === 0 ? 'Goal Achieved!' : `${formatINR(remaining)} to go`}
-                    </span>
                   </div>
 
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-500 bg-white p-2 rounded-lg border border-[#E9E1D3] mb-3">

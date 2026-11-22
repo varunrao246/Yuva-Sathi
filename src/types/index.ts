@@ -28,6 +28,7 @@ export interface IncomeConfig {
   otherIncome: number;
   incomeFrequency: 'monthly' | 'biweekly' | 'irregular';
   allowanceReceivedDate: number; // 1 - 31
+  monthlySavingsPlanned?: number; // Explicit monthly contribution to savings
 }
 
 export interface Commitment {
@@ -109,23 +110,27 @@ export interface OfferItem {
 }
 
 export interface FinancialCalculationResult {
+  moneyAvailable: number; // Total monthly money available to the student
   totalMonthlyIncome: number;
   totalMonthlyExpenses: number;
-  currentBalance: number;
+  currentBalance: number; // Money available minus recorded expenses
   totalCommitments: number;
   paidCommitments: number;
   unpaidCommitments: number;
   unpaidEssentialCommitments: number;
   unpaidOptionalCommitments: number;
-  safeToSpendToday: number;
+  creditCardTotalDue: number;
+  totalReservedPayments: number; // Unpaid commitments + credit card dues to keep aside
+  plannedSavingsMonthly: number; // Explicitly planned monthly savings contribution
+  freeMoneyRemaining: number; // Money Available - Reserved Payments - Planned Savings - Expenses
+  safeToSpendToday: number; // Free Money Remaining / Days Remaining in Cycle (floored, ₹0 if negative)
   dailyBudget: number;
   currentDayOfMonth: number;
   daysInMonth: number;
   daysRemainingInMonth: number;
   spendingPace: 'frugal' | 'on_track' | 'fast' | 'critical';
   monthEndForecastBalance: number;
-  creditCardTotalDue: number;
-  discretionaryFunds: number;
+  discretionaryFunds: number; // Alias to Math.max(0, freeMoneyRemaining)
   totalSavedInGoals: number;
   targetSavingsTotal: number;
 }

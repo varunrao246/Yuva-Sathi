@@ -30,7 +30,6 @@ interface HeaderProps {
   onOpenPurchaseCheck: () => void;
   onOpenFinancialSetup: () => void;
   onOpenAuth: () => void;
-  onOpenIntegrations?: () => void;
   onOpenTelegram?: () => void;
   onOpenVoice?: () => void;
 }
@@ -42,7 +41,6 @@ export function Header({
   onOpenPurchaseCheck,
   onOpenFinancialSetup,
   onOpenAuth,
-  onOpenIntegrations,
   onOpenTelegram,
   onOpenVoice,
 }: HeaderProps) {
@@ -123,18 +121,6 @@ export function Header({
             <span className="text-slate-500 text-[11px]">Safe Today:</span>
             <span className="font-bold text-[#143E2B]">{formatINR(financials.safeToSpendToday)}</span>
           </div>
-
-          {/* Cloud & Integrations Audit */}
-          {onOpenIntegrations && (
-            <button
-              onClick={onOpenIntegrations}
-              className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E5DEC9] bg-white hover:bg-[#FAF7F0] text-xs font-medium text-slate-700 transition-colors"
-              title="Cloud Integrations Audit"
-            >
-              <Layers className="w-3.5 h-3.5 text-[#143E2B]" />
-              <span className="hidden md:inline text-[11px]">Integrations</span>
-            </button>
-          )}
 
           {/* Telegram Notifications / Alerts */}
           {onOpenTelegram && (

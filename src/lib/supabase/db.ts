@@ -149,7 +149,7 @@ export async function saveProfileToCloud(
   income?: Partial<IncomeConfig>
 ): Promise<boolean> {
   try {
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       id: userId,
       updated_at: new Date().toISOString(),
     };

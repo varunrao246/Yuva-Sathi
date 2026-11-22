@@ -34,12 +34,13 @@ export function calculateFinancials(
   const daysRemainingInMonth = Math.max(1, daysInMonth - currentDayOfMonth + 1);
   const daysPassed = Math.max(1, currentDayOfMonth);
 
-  // 1. Total Monthly Income
+  // 1. Money Available
   const safePocketMoney = Math.max(0, Number(income?.monthlyPocketMoney) || 0);
   const safeOtherIncome = Math.max(0, Number(income?.otherIncome) || 0);
-  const totalMonthlyIncome = safePocketMoney + safeOtherIncome;
+  const moneyAvailable = safePocketMoney + safeOtherIncome;
+  const totalMonthlyIncome = moneyAvailable;
 
-  // 2. Total Monthly Expenses (Current month transactions only)
+  // 2. Total Monthly Tracked Expenses (Current month transactions only)
   const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
   const currentMonthTransactions = transactions.filter(t => {
     return t.date && typeof t.date === 'string' && t.date.trim().startsWith(currentMonthPrefix);
@@ -50,7 +51,10 @@ export function calculateFinancials(
     return acc + (Number.isFinite(val) && val > 0 ? val : 0);
   }, 0);
 
-  // 3. Commitments analysis
+  // 3. Current liquid balance = Money Available - Tracked Expenses
+  const currentBalance = totalMonthlyIncome - totalMonthlyExpenses;
+
+  // 4. Commitments analysis (Sum of all recurring payments)
   let totalCommitments = 0;
   let paidCommitments = 0;
   let unpaidCommitments = 0;
@@ -72,85 +76,60 @@ export function calculateFinancials(
     }
   }
 
-  // 4. Credit Card Upcoming Due (Dues to isolate)
+  // 5. Credit Card Upcoming Due (Isolated separately, but reserved)
   const creditCardTotalDue = creditCards.reduce((acc, card) => {
     const due = Math.max(0, Number(card.upcomingDueAmount) || 0);
     return acc + (Number.isFinite(due) ? due : 0);
   }, 0);
 
-  // 5. Total Saved in Goals & Monthly Savings Target Reserve
+  // 6. Total Reserved Payments = All Unpaid Commitments + Credit Card Due
+  const totalReservedPayments = unpaidCommitments + creditCardTotalDue;
+
+  // 7. Savings Planned:
+  // Explicitly planned monthly savings contribution only.
+  // Rule: Do NOT automatically subtract full savings goal targets from monthly available money!
+  const plannedSavingsMonthly = Math.max(0, Number(income?.monthlySavingsPlanned) || 0);
+
+  // 8. Goals display metrics (targets vs saved amount)
   let totalSavedInGoals = 0;
   let targetSavingsTotal = 0;
-  let recommendedMonthlySavingsReserve = 0;
-
   for (const g of savingsGoals) {
-    const currentSaved = Math.max(0, Number(g.currentSavings) || 0);
-    const targetAmt = Math.max(0, Number(g.targetAmount) || 0);
-    totalSavedInGoals += currentSaved;
-    targetSavingsTotal += targetAmt;
-
-    if (!g.isCompleted && targetAmt > currentSaved) {
-      const remainingNeeded = targetAmt - currentSaved;
-      // Calculate months until target date
-      let monthsToTarget = 1;
-      if (g.targetDate) {
-        const tDate = new Date(g.targetDate);
-        if (!isNaN(tDate.getTime())) {
-          const diffMonths = (tDate.getFullYear() - currentYear) * 12 + (tDate.getMonth() - currentMonth);
-          monthsToTarget = Math.max(1, diffMonths);
-        }
-      }
-      const monthlyContribution = Math.ceil(remainingNeeded / monthsToTarget);
-      recommendedMonthlySavingsReserve += monthlyContribution;
-    }
+    totalSavedInGoals += Math.max(0, Number(g.currentSavings) || 0);
+    targetSavingsTotal += Math.max(0, Number(g.targetAmount) || 0);
   }
 
-  // 6. Current liquid balance = Total Income - Total Expenses So Far
-  const currentBalance = totalMonthlyIncome - totalMonthlyExpenses;
+  // 9. Free Money Remaining:
+  // Formula: Money Available - Unpaid Upcoming Payments - Planned Savings Contributions - Tracked Expenses
+  // Since currentBalance = Money Available - Tracked Expenses:
+  // Free Money Remaining = currentBalance - totalReservedPayments - plannedSavingsMonthly
+  const freeMoneyRemaining = currentBalance - totalReservedPayments - plannedSavingsMonthly;
 
-  // 7. Discretionary Funds Remaining:
-  // Available money minus unpaid essential commitments, credit card dues, and reasonable savings reserve
-  // Never negative
-  const essentialReserves = unpaidEssentialCommitments + creditCardTotalDue;
-  const fundsBeforeSavings = Math.max(0, currentBalance - essentialReserves);
-  
-  // Cap the savings reserve so it does not exceed 30% of discretionary buffer or create 0 budget
-  const actualSavingsReserve = Math.min(
-    recommendedMonthlySavingsReserve,
-    Math.floor(fundsBeforeSavings * 0.3)
-  );
-
-  const discretionaryFunds = Math.max(0, fundsBeforeSavings - actualSavingsReserve);
-
-  // 8. Safe-to-spend today:
-  // Discretionary funds distributed evenly across the remaining days of the month
-  const safeToSpendToday = daysRemainingInMonth > 0
-    ? Math.max(0, Math.floor(discretionaryFunds / daysRemainingInMonth))
+  // 10. Safe To Spend Today:
+  // Free Money Remaining / Days Remaining in Budget Cycle
+  // Rounded down (Math.floor) to prevent overspending. ₹0/day if negative or cycle finished.
+  const safeToSpendToday = (freeMoneyRemaining > 0 && daysRemainingInMonth > 0)
+    ? Math.floor(freeMoneyRemaining / daysRemainingInMonth)
     : 0;
 
-  // 9. Daily budget base:
-  // Total income minus total essential commitments & savings divided by days in month
-  const totalEssentialCommitments = commitments
-    .filter(c => c.isEssential)
-    .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
-  
+  // Discretionary funds alias for backward compatibility (never negative)
+  const discretionaryFunds = Math.max(0, freeMoneyRemaining);
+
+  // 11. Daily budget base:
   const baseMonthlyDiscretionary = Math.max(
     0,
-    totalMonthlyIncome - totalEssentialCommitments - creditCardTotalDue - actualSavingsReserve
+    totalMonthlyIncome - totalReservedPayments - plannedSavingsMonthly
   );
   const dailyBudget = daysInMonth > 0 ? Math.floor(baseMonthlyDiscretionary / daysInMonth) : 0;
 
-  // 10. Month-end Forecast:
-  // Exclude fixed commitments from variable daily burn rate to avoid distorting projection
+  // 12. Month-end forecast & pace indicator
   const variableExpenses = Math.max(0, totalMonthlyExpenses - paidCommitments);
   const dailyVariableSpendRate = variableExpenses / daysPassed;
   const projectedVariableSpend = dailyVariableSpendRate * (daysRemainingInMonth - 1);
   const projectedTotalSpend = totalMonthlyExpenses + projectedVariableSpend + unpaidCommitments;
   const monthEndForecastBalance = Math.round(totalMonthlyIncome - projectedTotalSpend);
 
-  // 11. Spending Pace indicator
   let spendingPace: 'frugal' | 'on_track' | 'fast' | 'critical' = 'on_track';
-  if (currentBalance < unpaidEssentialCommitments) {
+  if (freeMoneyRemaining < 0) {
     spendingPace = 'critical';
   } else if (dailyBudget > 0 && dailyVariableSpendRate > dailyBudget * 1.35) {
     spendingPace = 'fast';
@@ -161,6 +140,7 @@ export function calculateFinancials(
   }
 
   return {
+    moneyAvailable,
     totalMonthlyIncome,
     totalMonthlyExpenses,
     currentBalance,
@@ -169,6 +149,10 @@ export function calculateFinancials(
     unpaidCommitments,
     unpaidEssentialCommitments,
     unpaidOptionalCommitments,
+    creditCardTotalDue,
+    totalReservedPayments,
+    plannedSavingsMonthly,
+    freeMoneyRemaining,
     safeToSpendToday,
     dailyBudget,
     currentDayOfMonth,
@@ -176,7 +160,6 @@ export function calculateFinancials(
     daysRemainingInMonth,
     spendingPace,
     monthEndForecastBalance,
-    creditCardTotalDue,
     discretionaryFunds,
     totalSavedInGoals,
     targetSavingsTotal,

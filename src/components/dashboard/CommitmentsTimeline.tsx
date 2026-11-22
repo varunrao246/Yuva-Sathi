@@ -17,25 +17,32 @@ export function CommitmentsTimeline({
   onOpenSettings
 }: CommitmentsTimelineProps) {
   const sorted = [...commitments].sort((a, b) => a.dueDay - b.dueDay);
+  const unpaidTotal = commitments.filter(c => !c.isPaid).reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+  const totalMonthlyCommitments = commitments.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-[#E9E1D3] shadow-xs">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-bold text-forest-900 text-sm md:text-base">
-            Recurring Commitments
-          </h3>
-          <p className="text-xs text-gray-500">
-            Rent, hostel mess, mobile plans, and subscriptions
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-forest-900 text-sm md:text-base">
+              Recurring Commitments
+            </h3>
+            <span className="text-xs font-bold text-forest-800 bg-forest-50 border border-forest-200 px-2 py-0.5 rounded-full">
+              {formatINR(totalMonthlyCommitments)} / mo
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {formatINR(unpaidTotal)} unpaid upcoming • Rent, mess, mobile, Wi-Fi
           </p>
         </div>
 
         <button
           onClick={onOpenSettings}
-          className="text-xs font-semibold text-forest-700 hover:text-forest-900 flex items-center gap-1"
+          className="text-xs font-semibold text-forest-700 hover:text-forest-900 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E9E1D3] hover:bg-forest-50 transition-smooth"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Manage</span>
+          <span>Add / Manage</span>
         </button>
       </div>
 

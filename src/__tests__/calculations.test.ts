@@ -106,17 +106,18 @@ describe('Yuva Sathi Financial Calculation Engine', () => {
     );
 
     // Current balance = 15000 - 2000 = 13000
-    // Unpaid essentials = 400 (Mobile Plan)
-    // Credit due = 500 (OneCard)
-    // Discretionary = 13000 - 400 - 500 = 12100
-    expect(res.unpaidEssentialCommitments).toBe(400);
+    // Unpaid recurring commitments = 400 (Mobile Plan) + 60 (Spotify) = 460
+    // Credit card due = 500 (OneCard)
+    // Total Reserved = 460 + 500 = 960
+    // Discretionary / Free Money = 13000 - 960 = 12040
+    expect(res.unpaidCommitments).toBe(460);
     expect(res.creditCardTotalDue).toBe(500);
-    expect(res.discretionaryFunds).toBe(12100);
+    expect(res.discretionaryFunds).toBe(12040);
 
     // Days remaining = 30 - 20 + 1 = 11 days
-    // Safe to spend today = floor(12100 / 11) = 1100
+    // Safe to spend today = floor(12040 / 11) = 1094
     expect(res.daysRemainingInMonth).toBe(11);
-    expect(res.safeToSpendToday).toBe(1100);
+    expect(res.safeToSpendToday).toBe(1094);
   });
 
   it('reserves portion for active savings goals', () => {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerateContentResult } from '@google/generative-ai';
 import { FinancialCalculationResult, Transaction, Commitment, SavingsGoal } from '@/types';
 import { getLocalCoachResponse } from '@/lib/ai-coach';
 import { formatINR } from '@/lib/currency';
@@ -21,6 +21,7 @@ function checkRateLimit(ip: string): boolean {
 }
 
 const DEFAULT_EMPTY_FINANCIALS: FinancialCalculationResult = {
+  moneyAvailable: 0,
   totalMonthlyIncome: 0,
   totalMonthlyExpenses: 0,
   currentBalance: 0,
@@ -29,6 +30,10 @@ const DEFAULT_EMPTY_FINANCIALS: FinancialCalculationResult = {
   unpaidCommitments: 0,
   unpaidEssentialCommitments: 0,
   unpaidOptionalCommitments: 0,
+  creditCardTotalDue: 0,
+  totalReservedPayments: 0,
+  plannedSavingsMonthly: 0,
+  freeMoneyRemaining: 0,
   safeToSpendToday: 0,
   dailyBudget: 0,
   currentDayOfMonth: 1,
@@ -36,7 +41,6 @@ const DEFAULT_EMPTY_FINANCIALS: FinancialCalculationResult = {
   daysRemainingInMonth: 1,
   spendingPace: 'on_track',
   monthEndForecastBalance: 0,
-  creditCardTotalDue: 0,
   discretionaryFunds: 0,
   totalSavedInGoals: 0,
   targetSavingsTotal: 0,
@@ -143,7 +147,7 @@ INSTRUCTIONS:
     );
 
     const generatePromise = model.generateContent(prompt);
-    const result: any = await Promise.race([generatePromise, timeoutPromise]);
+    const result = (await Promise.race([generatePromise, timeoutPromise])) as GenerateContentResult;
     const textResponse = result.response.text();
 
     return NextResponse.json({

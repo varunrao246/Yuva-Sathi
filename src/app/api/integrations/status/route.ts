@@ -22,8 +22,9 @@ export async function GET() {
           supabaseMessage = `Configured (Table check: ${error.message})`;
         }
       }
-    } catch (err: any) {
-      supabaseMessage = `Connection error: ${err.message}`;
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      supabaseMessage = `Connection error: ${errorMsg}`;
     }
   }
 

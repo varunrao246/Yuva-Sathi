@@ -227,8 +227,9 @@ export async function sendTelegramMessage(
     });
     const json = await res.json();
     return json;
-  } catch (err: any) {
-    console.error('[Telegram Bot] Failed to send message:', err);
-    return { ok: false, description: err.message };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to send telegram message';
+    console.error('[Telegram Bot] Failed to send message:', errorMsg);
+    return { ok: false, description: errorMsg };
   }
 }

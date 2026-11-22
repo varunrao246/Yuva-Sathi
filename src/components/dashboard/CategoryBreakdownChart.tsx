@@ -69,7 +69,7 @@ export function CategoryBreakdownChart({ transactions }: CategoryBreakdownChartP
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip
-                  formatter={(val: any) => [formatINR(Number(val)), 'Spent']}
+                  formatter={(val: unknown) => [formatINR(Number(val || 0)), 'Spent']}
                   contentStyle={{
                     backgroundColor: '#0F2F20',
                     borderRadius: '8px',

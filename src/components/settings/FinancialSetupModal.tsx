@@ -34,6 +34,7 @@ export function FinancialSetupModal({
   const [pocketMoney, setPocketMoney] = useState(String(income.monthlyPocketMoney || 0));
   const [otherIncome, setOtherIncome] = useState(String(income.otherIncome || 0));
   const [allowanceDate, setAllowanceDate] = useState(String(income.allowanceReceivedDate || 1));
+  const [monthlySavings, setMonthlySavings] = useState(String(income.monthlySavingsPlanned || 0));
 
   // Add commitment fields
   const [comName, setComName] = useState('');
@@ -52,6 +53,7 @@ export function FinancialSetupModal({
     setPocketMoney(String(income.monthlyPocketMoney ?? 12000));
     setOtherIncome(String(income.otherIncome ?? 0));
     setAllowanceDate(String(income.allowanceReceivedDate ?? 1));
+    setMonthlySavings(String(income.monthlySavingsPlanned ?? 0));
   }, [income, isOpen]);
 
   if (!isOpen) return null;
@@ -62,8 +64,9 @@ export function FinancialSetupModal({
       monthlyPocketMoney: parseFloat(pocketMoney) || 0,
       otherIncome: parseFloat(otherIncome) || 0,
       allowanceReceivedDate: parseInt(allowanceDate, 10) || 1,
+      monthlySavingsPlanned: parseFloat(monthlySavings) || 0,
     });
-    showToast('Updated monthly inflow settings', 'success');
+    showToast('Updated monthly inflow & savings settings', 'success');
   };
 
   const handleAddCommitment = (e: React.FormEvent) => {
@@ -183,12 +186,26 @@ export function FinancialSetupModal({
                 className="w-full px-3 py-1.5 bg-white border border-[#E9E1D3] rounded-lg text-xs font-bold"
               />
             </div>
-            <div className="flex items-end">
+            <div>
+              <label htmlFor="setup-savings" className="block text-[11px] font-semibold text-charcoal-700 mb-1">
+                Planned Savings (₹)
+              </label>
+              <input
+                id="setup-savings"
+                type="number"
+                min="0"
+                value={monthlySavings}
+                onChange={(e) => setMonthlySavings(e.target.value)}
+                placeholder="Optional"
+                className="w-full px-3 py-1.5 bg-white border border-[#E9E1D3] rounded-lg text-xs font-bold text-forest-800"
+              />
+            </div>
+            <div className="flex items-end sm:col-span-4">
               <button
                 type="submit"
-                className="w-full py-1.5 bg-forest-700 hover:bg-forest-800 text-cream-50 font-semibold text-xs rounded-lg transition-smooth"
+                className="w-full py-2 bg-forest-700 hover:bg-forest-800 text-cream-50 font-semibold text-xs rounded-lg transition-smooth"
               >
-                Save Inflow
+                Save Inflow & Planned Savings
               </button>
             </div>
           </form>

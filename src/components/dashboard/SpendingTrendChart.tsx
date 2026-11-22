@@ -27,7 +27,7 @@ export function SpendingTrendChart({ transactions, financials }: SpendingTrendCh
   const currentDay = financials.currentDayOfMonth;
 
   // Build daily cumulative curve
-  const data: { day: string; actual: number; idealBudget: number }[] = [];
+  const data: { day: string; actual: number | null; idealBudget: number }[] = [];
   const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
 
   const dayTotals: Record<number, number> = {};
@@ -49,7 +49,7 @@ export function SpendingTrendChart({ transactions, financials }: SpendingTrendCh
 
     data.push({
       day: `${d}`,
-      actual: isPastOrToday ? cumulativeActual : (null as any),
+      actual: isPastOrToday ? cumulativeActual : null,
       idealBudget: Math.round(dailyIdealStep * d),
     });
   }
@@ -107,8 +107,8 @@ export function SpendingTrendChart({ transactions, financials }: SpendingTrendCh
                 tickFormatter={(val) => `₹${val >= 1000 ? `${Math.round(val / 1000)}k` : val}`}
               />
               <Tooltip
-                formatter={(value: any, name?: any) => [
-                  formatINR(Number(value)),
+                formatter={(value: unknown, name?: unknown) => [
+                  formatINR(Number(value || 0)),
                   String(name) === 'actual' ? 'Actual Spend' : 'Target Budget',
                 ]}
                 labelFormatter={(label) => `Day ${label} of Month`}

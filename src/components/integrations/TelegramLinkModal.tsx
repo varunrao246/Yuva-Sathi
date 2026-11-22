@@ -84,8 +84,9 @@ export const TelegramLinkModal: React.FC<TelegramLinkModalProps> = ({
       } else {
         setTestNotificationStatus(`Notice: ${data.message || data.error}`);
       }
-    } catch (e: any) {
-      setTestNotificationStatus(`Error: ${e.message}`);
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : 'Request failed';
+      setTestNotificationStatus(`Error: ${errorMsg}`);
     }
   };
 

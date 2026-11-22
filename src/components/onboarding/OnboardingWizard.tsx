@@ -97,7 +97,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
     setCommitmentsList(prev => [
       ...prev,
       {
-        id: `com_${Date.now()}`,
+        id: `com_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         name: newComName.trim(),
         amount: amt,
         dueDay: parseInt(newComDueDay, 10) || 1,
@@ -121,7 +121,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
     setCardsList(prev => [
       ...prev,
       {
-        id: `cc_${Date.now()}`,
+        id: `cc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         nickname: newCardNickname.trim(),
         upcomingDueAmount: due,
         outstandingBalance: due,
@@ -142,7 +142,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
     setGoalsList(prev => [
       ...prev,
       {
-        id: `sg_${Date.now()}`,
+        id: `sg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         name: newGoalName.trim(),
         targetAmount: tgt,
         currentSavings: parseFloat(newGoalSaved) || 0,
@@ -307,6 +307,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 <input
                   type="text"
                   placeholder="e.g. WiFi Bill, Gym"
+                  aria-label="Commitment name"
                   value={newComName}
                   onChange={(e) => setNewComName(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
@@ -314,6 +315,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 <input
                   type="number"
                   placeholder="Amount ₹"
+                  aria-label="Commitment amount in Rupees"
                   value={newComAmount}
                   onChange={(e) => setNewComAmount(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
@@ -376,6 +378,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 <input
                   type="text"
                   placeholder="Nickname (e.g. OneCard, Slice)"
+                  aria-label="Card nickname"
                   value={newCardNickname}
                   onChange={(e) => setNewCardNickname(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
@@ -383,6 +386,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 <input
                   type="number"
                   placeholder="Upcoming Due ₹"
+                  aria-label="Upcoming card due amount in Rupees"
                   value={newCardDue}
                   onChange={(e) => setNewCardDue(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
@@ -437,6 +441,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 <input
                   type="text"
                   placeholder="Goal (e.g. Goa Trip)"
+                  aria-label="Goal name"
                   value={newGoalName}
                   onChange={(e) => setNewGoalName(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
@@ -444,6 +449,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 <input
                   type="number"
                   placeholder="Target (₹)"
+                  aria-label="Target savings amount in Rupees"
                   value={newGoalTarget}
                   onChange={(e) => setNewGoalTarget(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
@@ -465,7 +471,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
           {step > 1 ? (
             <button
               type="button"
-              onClick={() => setStep((s) => (s - 1) as any)}
+              onClick={() => setStep((s) => (Math.max(1, s - 1) as 1 | 2 | 3 | 4))}
               className="flex items-center gap-1 px-4 py-2 text-xs font-semibold text-forest-800 hover:bg-forest-50 rounded-xl"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -478,7 +484,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
           {step < 4 ? (
             <button
               type="button"
-              onClick={() => setStep((s) => (s + 1) as any)}
+              onClick={() => setStep((s) => (Math.min(4, s + 1) as 1 | 2 | 3 | 4))}
               className="flex items-center gap-1 px-5 py-2.2 bg-forest-700 hover:bg-forest-800 text-cream-50 font-semibold text-xs rounded-xl shadow-xs"
             >
               <span>Continue</span>

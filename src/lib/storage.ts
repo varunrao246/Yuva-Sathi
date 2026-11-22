@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { SupabaseClient } from '@supabase/supabase-js';
 import {
   UserProfile,
   IncomeConfig,
@@ -222,11 +223,11 @@ export function useYuvaStore() {
   };
 
   // Helper for background cloud sync with Supabase (strictly ignored in demo mode)
-  const syncToCloud = useCallback((action: (supabase: any, userId: string) => Promise<any>) => {
+  const syncToCloud = useCallback((action: (supabase: SupabaseClient, userId: string) => Promise<unknown>) => {
     if (appMode !== 'user') return;
     const client = getSupabaseBrowserClient();
     if (!client || !profile.id) return;
-    action(client, profile.id).catch((err: any) => {
+    action(client, profile.id).catch((err: unknown) => {
       console.warn('[Yuva Sathi Supabase Sync Warning]', err);
     });
   }, [appMode, profile.id]);
@@ -263,19 +264,23 @@ export function useYuvaStore() {
 
   const addTransaction = (tx: Omit<Transaction, 'id'>) => {
     const { txKey } = getKeys();
+    const currentList = getStoredItem<Transaction[]>(txKey, transactions);
     const newTx: Transaction = {
       ...tx,
-      id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: tx && 'id' in tx && (tx as Transaction).id ? (tx as Transaction).id : `tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
     };
-    const updated = [newTx, ...transactions];
+    const updated = [newTx, ...currentList.filter(t => t.id !== newTx.id)];
     setStoredItem(txKey, updated);
+    setTransactionsState(updated);
     syncToCloud((supabase, uid) => upsertTransactionToCloud(supabase, uid, newTx));
   };
 
   const updateTransaction = (id: string, tx: Partial<Transaction>) => {
     const { txKey } = getKeys();
-    const updated = transactions.map(t => (t.id === id ? { ...t, ...tx } : t));
+    const currentList = getStoredItem<Transaction[]>(txKey, transactions);
+    const updated = currentList.map(t => (t.id === id ? { ...t, ...tx } : t));
     setStoredItem(txKey, updated);
+    setTransactionsState(updated);
     const targetTx = updated.find(t => t.id === id);
     if (targetTx) {
       syncToCloud((supabase, uid) => upsertTransactionToCloud(supabase, uid, targetTx));
@@ -284,26 +289,43 @@ export function useYuvaStore() {
 
   const deleteTransaction = (id: string) => {
     const { txKey } = getKeys();
-    const updated = transactions.filter(t => t.id !== id);
+    const currentList = getStoredItem<Transaction[]>(txKey, transactions);
+    const updated = currentList.filter(t => t.id !== id);
     setStoredItem(txKey, updated);
+    setTransactionsState(updated);
     syncToCloud((supabase, uid) => deleteTransactionFromCloud(supabase, uid, id));
   };
 
   const addCommitment = (c: Omit<Commitment, 'id'>) => {
     const { commitmentsKey } = getKeys();
+    // Read directly from storage to eliminate stale React closure state across multiple additions
+    const currentList = getStoredItem<Commitment[]>(commitmentsKey, commitments);
     const newC: Commitment = {
       ...c,
-      id: `com_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: c && 'id' in c && (c as Commitment).id ? (c as Commitment).id : `com_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
     };
-    const updated = [...commitments, newC];
+    // Append or update existing commitment safely
+    const updated = [...currentList.filter(item => item.id !== newC.id), newC];
     setStoredItem(commitmentsKey, updated);
+    setCommitmentsState(updated);
     syncToCloud((supabase, uid) => upsertCommitmentToCloud(supabase, uid, newC));
+  };
+
+  const setAllCommitments = (newList: Commitment[]) => {
+    const { commitmentsKey } = getKeys();
+    setStoredItem(commitmentsKey, newList);
+    setCommitmentsState(newList);
+    newList.forEach(c => {
+      syncToCloud((supabase, uid) => upsertCommitmentToCloud(supabase, uid, c));
+    });
   };
 
   const toggleCommitmentPaid = (id: string) => {
     const { commitmentsKey } = getKeys();
-    const updated = commitments.map(c => (c.id === id ? { ...c, isPaid: !c.isPaid } : c));
+    const currentList = getStoredItem<Commitment[]>(commitmentsKey, commitments);
+    const updated = currentList.map(c => (c.id === id ? { ...c, isPaid: !c.isPaid } : c));
     setStoredItem(commitmentsKey, updated);
+    setCommitmentsState(updated);
     const targetC = updated.find(c => c.id === id);
     if (targetC) {
       syncToCloud((supabase, uid) => upsertCommitmentToCloud(supabase, uid, targetC));
@@ -312,44 +334,72 @@ export function useYuvaStore() {
 
   const deleteCommitment = (id: string) => {
     const { commitmentsKey } = getKeys();
-    const updated = commitments.filter(c => c.id !== id);
+    const currentList = getStoredItem<Commitment[]>(commitmentsKey, commitments);
+    const updated = currentList.filter(c => c.id !== id);
     setStoredItem(commitmentsKey, updated);
+    setCommitmentsState(updated);
     syncToCloud((supabase, uid) => deleteCommitmentFromCloud(supabase, uid, id));
   };
 
   const addCreditCard = (card: Omit<CreditCard, 'id'>) => {
     const { cardsKey } = getKeys();
+    const currentList = getStoredItem<CreditCard[]>(cardsKey, creditCards);
     const newCard: CreditCard = {
       ...card,
-      id: `cc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: card && 'id' in card && (card as CreditCard).id ? (card as CreditCard).id : `cc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
     };
-    const updated = [...creditCards, newCard];
+    const updated = [...currentList.filter(item => item.id !== newCard.id), newCard];
     setStoredItem(cardsKey, updated);
+    setCreditCardsState(updated);
     syncToCloud((supabase, uid) => upsertCreditCardToCloud(supabase, uid, newCard));
+  };
+
+  const setAllCreditCards = (newList: CreditCard[]) => {
+    const { cardsKey } = getKeys();
+    setStoredItem(cardsKey, newList);
+    setCreditCardsState(newList);
+    newList.forEach(card => {
+      syncToCloud((supabase, uid) => upsertCreditCardToCloud(supabase, uid, card));
+    });
   };
 
   const deleteCreditCard = (id: string) => {
     const { cardsKey } = getKeys();
-    const updated = creditCards.filter(c => c.id !== id);
+    const currentList = getStoredItem<CreditCard[]>(cardsKey, creditCards);
+    const updated = currentList.filter(c => c.id !== id);
     setStoredItem(cardsKey, updated);
+    setCreditCardsState(updated);
     syncToCloud((supabase, uid) => deleteCreditCardFromCloud(supabase, uid, id));
   };
 
   const addSavingsGoal = (goal: Omit<SavingsGoal, 'id'>) => {
     const { savingsKey } = getKeys();
+    const currentList = getStoredItem<SavingsGoal[]>(savingsKey, savingsGoals);
     const newGoal: SavingsGoal = {
       ...goal,
-      id: `sg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: goal && 'id' in goal && (goal as SavingsGoal).id ? (goal as SavingsGoal).id : `sg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
     };
-    const updated = [...savingsGoals, newGoal];
+    const updated = [...currentList.filter(item => item.id !== newGoal.id), newGoal];
     setStoredItem(savingsKey, updated);
+    setSavingsGoalsState(updated);
     syncToCloud((supabase, uid) => upsertSavingsGoalToCloud(supabase, uid, newGoal));
+  };
+
+  const setAllSavingsGoals = (newList: SavingsGoal[]) => {
+    const { savingsKey } = getKeys();
+    setStoredItem(savingsKey, newList);
+    setSavingsGoalsState(newList);
+    newList.forEach(g => {
+      syncToCloud((supabase, uid) => upsertSavingsGoalToCloud(supabase, uid, g));
+    });
   };
 
   const updateSavingsGoal = (id: string, goal: Partial<SavingsGoal>) => {
     const { savingsKey } = getKeys();
-    const updated = savingsGoals.map(g => (g.id === id ? { ...g, ...goal } : g));
+    const currentList = getStoredItem<SavingsGoal[]>(savingsKey, savingsGoals);
+    const updated = currentList.map(g => (g.id === id ? { ...g, ...goal } : g));
     setStoredItem(savingsKey, updated);
+    setSavingsGoalsState(updated);
     const targetGoal = updated.find(g => g.id === id);
     if (targetGoal) {
       syncToCloud((supabase, uid) => upsertSavingsGoalToCloud(supabase, uid, targetGoal));
@@ -358,8 +408,10 @@ export function useYuvaStore() {
 
   const deleteSavingsGoal = (id: string) => {
     const { savingsKey } = getKeys();
-    const updated = savingsGoals.filter(g => g.id !== id);
+    const currentList = getStoredItem<SavingsGoal[]>(savingsKey, savingsGoals);
+    const updated = currentList.filter(g => g.id !== id);
     setStoredItem(savingsKey, updated);
+    setSavingsGoalsState(updated);
     syncToCloud((supabase, uid) => deleteSavingsGoalFromCloud(supabase, uid, id));
   };
 
@@ -461,11 +513,14 @@ export function useYuvaStore() {
     updateTransaction,
     deleteTransaction,
     addCommitment,
+    setAllCommitments,
     toggleCommitmentPaid,
     deleteCommitment,
     addCreditCard,
+    setAllCreditCards,
     deleteCreditCard,
     addSavingsGoal,
+    setAllSavingsGoals,
     updateSavingsGoal,
     deleteSavingsGoal,
     updateScholarshipStatus,

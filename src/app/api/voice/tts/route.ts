@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    if (!body || !body.text) {
-      return NextResponse.json({ error: 'Text is required for TTS' }, { status: 400 });
+    if (!body || typeof body.text !== 'string' || body.text.trim().length === 0) {
+      return NextResponse.json({ error: 'Non-empty text string is required for TTS' }, { status: 400 });
     }
 
     const { text, language = 'en-IN', voice = 'sathi_indic' } = body;
-    const sanitizedText = String(text).trim().slice(0, 600); // cap to 600 chars
+    const sanitizedText = text.trim().slice(0, 600); // cap to 600 chars
 
     const gnaniApiKey = process.env.GNANI_API_KEY || process.env.GNANI_TOKEN || process.env.GNANI_ACCESS_KEY;
     const ttsEndpoint = process.env.GNANI_TTS_ENDPOINT || 'https://tts.gnani.ai/v1/synthesize';
@@ -69,18 +69,21 @@ export async function POST(req: NextRequest) {
         engine: 'gnani.ai',
         language,
       });
-    } catch (fetchErr: any) {
+    } catch (fetchErr: unknown) {
       clearTimeout(timeout);
-      console.warn('[Gnani.ai TTS Fetch Warning]', fetchErr.message);
+      const isAbort = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+      const msg = fetchErr instanceof Error ? fetchErr.message : 'TTS fetch failed';
+      console.warn('[Gnani.ai TTS Fetch Warning]', msg);
       return NextResponse.json({
         audioUrl: null,
         isConfigured: true,
-        error: fetchErr.name === 'AbortError' ? 'Gnani TTS timed out' : fetchErr.message,
+        error: isAbort ? 'Gnani TTS timed out' : msg,
         engine: 'browser_speech_synthesis',
         text: sanitizedText,
       });
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'TTS synthesis failed' }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'TTS synthesis failed';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

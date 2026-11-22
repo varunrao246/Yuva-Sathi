@@ -88,17 +88,20 @@ export async function POST(req: NextRequest) {
         engine: 'gnani.ai',
         isConfigured: true,
       });
-    } catch (fetchErr: any) {
+    } catch (fetchErr: unknown) {
       clearTimeout(timeout);
-      console.warn('[Gnani.ai STT Fetch Warning]', fetchErr.message);
+      const isAbort = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+      const msg = fetchErr instanceof Error ? fetchErr.message : 'STT fetch failed';
+      console.warn('[Gnani.ai STT Fetch Warning]', msg);
       return NextResponse.json({
         transcript: null,
         isConfigured: true,
-        error: fetchErr.name === 'AbortError' ? 'Gnani STT timed out after 8s' : fetchErr.message,
+        error: isAbort ? 'Gnani STT timed out after 8s' : msg,
         engine: 'browser_fallback',
       });
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'STT processing failed' }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'STT processing failed';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

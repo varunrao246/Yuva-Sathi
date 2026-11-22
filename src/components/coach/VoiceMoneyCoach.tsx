@@ -159,7 +159,7 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
 
       // 2. Synthesize speech via Gnani.ai TTS or Browser SpeechSynthesis
       speakResponse(replyText);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Voice Query Error]', err);
       setErrorMessage('Could not process voice query. Please try again.');
       setStatus('error');

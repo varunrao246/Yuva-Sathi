@@ -8,8 +8,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { userId, type = 'daily_summary', customMessage } = body;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json({ error: 'Valid userId string is required' }, { status: 400 });
+    }
+
+    const validNotificationTypes = ['daily_summary', 'commitment_due', 'overspending_alert'];
+    if (!customMessage && !validNotificationTypes.includes(type)) {
+      return NextResponse.json({ error: `Invalid notification type. Must be one of: ${validNotificationTypes.join(', ')}` }, { status: 400 });
     }
 
     // Lookup telegram link
@@ -26,8 +31,10 @@ export async function POST(req: NextRequest) {
 
       if (data?.telegram_chat_id) {
         // Check quiet hours if configured (defaults 22:00 to 07:00 IST)
+        // IST is UTC+5:30 (19,800,000 ms offset)
         const now = new Date();
-        const currentHour = (now.getUTCHours() + 5.5) % 24; // IST Hour
+        const istDate = new Date(now.getTime() + 19800000);
+        const currentHour = istDate.getUTCHours();
         if (currentHour >= 22 || currentHour < 7) {
           return NextResponse.json({
             ok: false,
@@ -104,7 +111,8 @@ export async function POST(req: NextRequest) {
         preview: messageText,
       });
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Failed to dispatch notification' }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to dispatch notification';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

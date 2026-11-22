@@ -167,8 +167,9 @@ export async function POST(req: NextRequest) {
       `• /help — Full command list`;
     await sendTelegramMessage(chatId, defaultMsg);
     return NextResponse.json({ ok: true, action: 'fallback' });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Telegram Webhook Error]', err);
-    return NextResponse.json({ error: err.message || 'Webhook processing failed' }, { status: 500 });
+    const errorMsg = err instanceof Error ? err.message : 'Webhook processing failed';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

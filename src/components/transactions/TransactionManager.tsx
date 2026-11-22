@@ -127,7 +127,7 @@ export function TransactionManager({
           <select
             id="category-filter"
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value as any)}
+            onChange={(e) => setSelectedCategory(e.target.value as ExpenseCategory | 'All')}
             className="bg-[#FAF7F0] border border-[#E9E1D3] rounded-xl px-3 py-2 text-xs font-medium text-charcoal-800 focus:outline-none focus:border-forest-600"
           >
             {CATEGORIES.map(cat => (
@@ -141,7 +141,7 @@ export function TransactionManager({
           <select
             id="sort-filter"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc')}
             className="bg-[#FAF7F0] border border-[#E9E1D3] rounded-xl px-3 py-2 text-xs font-medium text-charcoal-800 focus:outline-none focus:border-forest-600"
           >
             <option value="date-desc">Newest First</option>

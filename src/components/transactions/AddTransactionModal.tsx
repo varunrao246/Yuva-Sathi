@@ -31,6 +31,8 @@ const CATEGORIES: ExpenseCategory[] = [
   'Other',
 ];
 
+type TransactionPaymentMethod = 'UPI' | 'Debit Card' | 'Credit Card' | 'Cash' | 'NetBanking';
+
 export function AddTransactionModal({
   isOpen,
   onClose,
@@ -45,7 +47,7 @@ export function AddTransactionModal({
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Debit Card' | 'Credit Card' | 'Cash' | 'NetBanking'>('UPI');
+  const [paymentMethod, setPaymentMethod] = useState<TransactionPaymentMethod>('UPI');
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -218,7 +220,7 @@ export function AddTransactionModal({
               <select
                 id="tx-payment"
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value as any)}
+                onChange={(e) => setPaymentMethod(e.target.value as TransactionPaymentMethod)}
                 className="w-full px-3 py-2 bg-[#FAF7F0] border border-[#E9E1D3] rounded-xl text-xs font-medium text-charcoal-900 focus:outline-none focus:border-forest-600"
               >
                 <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>

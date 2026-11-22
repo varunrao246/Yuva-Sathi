@@ -21,7 +21,6 @@ import { AICoachChat } from '@/components/coach/AICoachChat';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { FinancialSetupModal } from '@/components/settings/FinancialSetupModal';
-import { IntegrationsModal } from '@/components/integrations/IntegrationsModal';
 import { TelegramLinkModal } from '@/components/integrations/TelegramLinkModal';
 import { ScholarshipsExplorer } from '@/components/scholarships/ScholarshipsExplorer';
 import { OpportunitiesExplorer } from '@/components/opportunities/OpportunitiesExplorer';
@@ -69,11 +68,14 @@ export default function HomePage() {
     updateTransaction,
     deleteTransaction,
     addCommitment,
+    setAllCommitments,
     toggleCommitmentPaid,
     deleteCommitment,
     addCreditCard,
+    setAllCreditCards,
     deleteCreditCard,
     addSavingsGoal,
+    setAllSavingsGoals,
     updateSavingsGoal,
     deleteSavingsGoal,
     trackedScholarships,
@@ -88,7 +90,6 @@ export default function HomePage() {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
-  const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
   const [isTelegramOpen, setIsTelegramOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [initialExpenseData, setInitialExpenseData] = useState<{
@@ -122,9 +123,9 @@ export default function HomePage() {
     savingsGoals: SavingsGoal[];
   }) => {
     updateIncome(data.income);
-    for (const c of data.commitments) addCommitment(c);
-    for (const card of data.creditCards) addCreditCard(card);
-    for (const g of data.savingsGoals) addSavingsGoal(g);
+    setAllCommitments(data.commitments);
+    setAllCreditCards(data.creditCards);
+    setAllSavingsGoals(data.savingsGoals);
     updateProfile({ onboardingCompleted: true });
     showToast('Onboarding complete! Your personalized ledger is ready.', 'success');
   };
@@ -249,7 +250,6 @@ export default function HomePage() {
         onOpenPurchaseCheck={() => setActiveTab('purchase-check')}
         onOpenFinancialSetup={() => setIsSetupOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenIntegrations={() => setIsIntegrationsOpen(true)}
         onOpenTelegram={() => setIsTelegramOpen(true)}
         onOpenVoice={() => setActiveTab('coach')}
       />
@@ -283,7 +283,12 @@ export default function HomePage() {
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {/* Financial Pulse */}
-              <FinancialPulse financials={financials} profile={profile} />
+              <FinancialPulse
+                financials={financials}
+                profile={profile}
+                commitments={commitments}
+                creditCards={creditCards}
+              />
 
               {/* Safe To Spend Highlight */}
               <SafeToSpendCard
@@ -487,13 +492,6 @@ export default function HomePage() {
         onDeleteCommitment={deleteCommitment}
         onAddCreditCard={addCreditCard}
         onDeleteCreditCard={deleteCreditCard}
-      />
-
-      <IntegrationsModal
-        isOpen={isIntegrationsOpen}
-        onClose={() => setIsIntegrationsOpen(false)}
-        onOpenTelegram={() => setIsTelegramOpen(true)}
-        onOpenVoice={() => setActiveTab('coach')}
       />
 
       <TelegramLinkModal

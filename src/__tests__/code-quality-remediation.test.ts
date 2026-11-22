@@ -27,6 +27,7 @@ describe('Code Quality Remediation — Architecture & Logic Unit Tests', () => {
 
   describe('AI Coach — Precision Regex Matching (P2-4 Regression Test)', () => {
     const mockFinancials: FinancialCalculationResult = {
+      moneyAvailable: 10000,
       totalMonthlyIncome: 10000,
       totalMonthlyExpenses: 4000,
       currentBalance: 6000,
@@ -35,6 +36,10 @@ describe('Code Quality Remediation — Architecture & Logic Unit Tests', () => {
       unpaidCommitments: 1000,
       unpaidEssentialCommitments: 1000,
       unpaidOptionalCommitments: 0,
+      creditCardTotalDue: 0,
+      totalReservedPayments: 1000,
+      plannedSavingsMonthly: 0,
+      freeMoneyRemaining: 5000,
       safeToSpendToday: 200,
       dailyBudget: 250,
       currentDayOfMonth: 10,
@@ -42,7 +47,6 @@ describe('Code Quality Remediation — Architecture & Logic Unit Tests', () => {
       daysRemainingInMonth: 20,
       spendingPace: 'on_track',
       monthEndForecastBalance: 2000,
-      creditCardTotalDue: 0,
       discretionaryFunds: 5000,
       totalSavedInGoals: 1000,
       targetSavingsTotal: 5000,

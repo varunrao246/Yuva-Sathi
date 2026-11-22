@@ -169,7 +169,7 @@ export const ScholarshipsExplorer: React.FC<ScholarshipsExplorerProps> = ({
               {/* Type Filter */}
               <select
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value as any)}
+                onChange={(e) => setSelectedType(e.target.value as ScholarshipType | 'All')}
                 aria-label="Filter scholarships by type"
                 className="text-xs bg-[#FAF7F0]/60 border border-[#E5DEC9] rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:border-[#143E2B]"
               >
@@ -181,7 +181,7 @@ export const ScholarshipsExplorer: React.FC<ScholarshipsExplorerProps> = ({
               {/* Status Filter */}
               <select
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value as any)}
+                onChange={(e) => setSelectedStatus(e.target.value as ScholarshipApplicationStatus | 'All' | 'Tracked')}
                 aria-label="Filter scholarships by tracking status"
                 className="text-xs bg-[#FAF7F0]/60 border border-[#E5DEC9] rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:border-[#143E2B]"
               >

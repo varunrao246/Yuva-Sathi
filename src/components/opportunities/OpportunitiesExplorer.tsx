@@ -145,7 +145,7 @@ export const OpportunitiesExplorer: React.FC<OpportunitiesExplorerProps> = ({
               {/* Type Filter */}
               <select
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value as any)}
+                onChange={(e) => setSelectedType(e.target.value as OpportunityType | 'All')}
                 aria-label="Filter opportunities by work type"
                 className="text-xs bg-[#FAF7F0]/60 border border-[#E5DEC9] rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:border-[#143E2B]"
               >
