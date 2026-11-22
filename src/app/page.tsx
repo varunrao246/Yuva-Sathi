@@ -68,6 +68,7 @@ export default function HomePage() {
     updateTransaction,
     deleteTransaction,
     addCommitment,
+    updateCommitment,
     setAllCommitments,
     toggleCommitmentPaid,
     deleteCommitment,
@@ -489,6 +490,7 @@ export default function HomePage() {
         creditCards={creditCards}
         onUpdateIncome={updateIncome}
         onAddCommitment={addCommitment}
+        onUpdateCommitment={updateCommitment}
         onDeleteCommitment={deleteCommitment}
         onAddCreditCard={addCreditCard}
         onDeleteCreditCard={deleteCreditCard}

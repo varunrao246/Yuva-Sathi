@@ -21,6 +21,7 @@ import {
   DEMO_TRANSACTIONS
 } from './seed-data';
 import { calculateFinancials } from './calculations';
+import { extractDueDayFromDate } from './commitments';
 import { getSupabaseBrowserClient } from './supabase/client';
 import {
   saveProfileToCloud,
@@ -300,8 +301,12 @@ export function useYuvaStore() {
     const { commitmentsKey } = getKeys();
     // Read directly from storage to eliminate stale React closure state across multiple additions
     const currentList = getStoredItem<Commitment[]>(commitmentsKey, commitments);
+    const dueDay = c.dueDate
+      ? extractDueDayFromDate(c.dueDate, c.dueDay)
+      : (c.dueDay || 1);
     const newC: Commitment = {
       ...c,
+      dueDay,
       id: c && 'id' in c && (c as Commitment).id ? (c as Commitment).id : `com_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
     };
     // Append or update existing commitment safely
@@ -309,6 +314,25 @@ export function useYuvaStore() {
     setStoredItem(commitmentsKey, updated);
     setCommitmentsState(updated);
     syncToCloud((supabase, uid) => upsertCommitmentToCloud(supabase, uid, newC));
+  };
+
+  const updateCommitment = (id: string, patch: Partial<Commitment>) => {
+    const { commitmentsKey } = getKeys();
+    const currentList = getStoredItem<Commitment[]>(commitmentsKey, commitments);
+    const updated = currentList.map(c => {
+      if (c.id !== id) return c;
+      const merged = { ...c, ...patch };
+      if (patch.dueDate) {
+        merged.dueDay = extractDueDayFromDate(patch.dueDate, merged.dueDay);
+      }
+      return merged;
+    });
+    setStoredItem(commitmentsKey, updated);
+    setCommitmentsState(updated);
+    const targetC = updated.find(c => c.id === id);
+    if (targetC) {
+      syncToCloud((supabase, uid) => upsertCommitmentToCloud(supabase, uid, targetC));
+    }
   };
 
   const setAllCommitments = (newList: Commitment[]) => {
@@ -513,6 +537,7 @@ export function useYuvaStore() {
     updateTransaction,
     deleteTransaction,
     addCommitment,
+    updateCommitment,
     setAllCommitments,
     toggleCommitmentPaid,
     deleteCommitment,

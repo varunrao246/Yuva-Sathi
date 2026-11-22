@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { formatINR } from '@/lib/currency';
 import { FinancialCalculationResult, UserProfile, Commitment, CreditCard } from '@/types';
+import { formatCommitmentDueDate, isCommitmentOverdue } from '@/lib/commitments';
 
 interface FinancialPulseProps {
   financials: FinancialCalculationResult;
@@ -155,18 +156,32 @@ export function FinancialPulse({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {unpaidList.map(c => (
-              <div
-                key={c.id}
-                className="flex items-center justify-between p-2.5 bg-white border border-[#E9E1D3] rounded-xl text-xs"
-              >
-                <div>
-                  <p className="font-semibold text-charcoal-900">{c.name}</p>
-                  <p className="text-[10px] text-gray-500">Due Day {c.dueDay}</p>
+            {unpaidList.map(c => {
+              const overdue = isCommitmentOverdue(c);
+              return (
+                <div
+                  key={c.id}
+                  className={`flex items-center justify-between p-2.5 rounded-xl text-xs border ${
+                    overdue ? 'bg-red-50/50 border-red-200' : 'bg-white border-[#E9E1D3]'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-semibold text-charcoal-900 truncate">{c.name}</p>
+                      {overdue && (
+                        <span className="text-[9px] bg-red-600 text-white font-bold px-1 rounded">
+                          Overdue
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-gray-500">
+                      Due: {formatCommitmentDueDate(c.dueDate, c.dueDay)}
+                    </p>
+                  </div>
+                  <span className="font-bold text-forest-900 shrink-0">{formatINR(c.amount)}</span>
                 </div>
-                <span className="font-bold text-forest-900">{formatINR(c.amount)}</span>
-              </div>
-            ))}
+              );
+            })}
 
             {cardDuesList.map(card => (
               <div

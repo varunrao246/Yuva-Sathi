@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { IncomeConfig, Commitment, CreditCard, SavingsGoal, ExpenseCategory } from '@/types';
 import { formatINR } from '@/lib/currency';
+import { formatCommitmentDueDate, extractDueDayFromDate } from '@/lib/commitments';
 import { useToast } from '../ui/Toast';
 
 interface OnboardingWizardProps {
@@ -43,6 +44,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
       id: 'com-init-1',
       name: 'Hostel Rent / Mess Advance',
       amount: 3000,
+      dueDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-05`,
       dueDay: 5,
       recurrence: 'monthly',
       isEssential: true,
@@ -53,6 +55,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
       id: 'com-init-2',
       name: 'Jio / Airtel 5G Recharge',
       amount: 399,
+      dueDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-18`,
       dueDay: 18,
       recurrence: 'monthly',
       isEssential: true,
@@ -62,7 +65,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
   ]);
   const [newComName, setNewComName] = useState('');
   const [newComAmount, setNewComAmount] = useState('');
-  const [newComDueDay, setNewComDueDay] = useState('10');
+  const [newComDueDate, setNewComDueDate] = useState('');
   const [newComEssential, setNewComEssential] = useState(true);
 
   // Step 3: Credit Cards
@@ -94,13 +97,19 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
       showToast('Please enter commitment name and amount', 'error');
       return;
     }
+    if (!newComDueDate.trim()) {
+      showToast('Please select a due date for the commitment', 'error');
+      return;
+    }
+    const dueDay = extractDueDayFromDate(newComDueDate);
     setCommitmentsList(prev => [
       ...prev,
       {
         id: `com_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         name: newComName.trim(),
         amount: amt,
-        dueDay: parseInt(newComDueDay, 10) || 1,
+        dueDate: newComDueDate,
+        dueDay,
         recurrence: 'monthly',
         isEssential: newComEssential,
         isPaid: false,
@@ -109,6 +118,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
     ]);
     setNewComName('');
     setNewComAmount('');
+    setNewComDueDate('');
     showToast(`Added commitment "${newComName}"`, 'success');
   };
 
@@ -283,7 +293,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                 >
                   <div>
                     <span className="font-semibold text-charcoal-900">{c.name}</span>
-                    <span className="text-[10px] text-gray-500 ml-2">Due day {c.dueDay}</span>
+                    <span className="text-[10px] text-gray-500 ml-2">Due: {formatCommitmentDueDate(c.dueDate, c.dueDay)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-forest-900">{formatINR(c.amount)}</span>
@@ -303,7 +313,7 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
             {/* Quick Add Commitment Form */}
             <div className="p-3 bg-forest-50/50 rounded-xl border border-forest-200 space-y-2">
               <span className="text-xs font-bold text-forest-900">+ Add Commitment</span>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input
                   type="text"
                   placeholder="e.g. WiFi Bill, Gym"
@@ -319,6 +329,18 @@ export function OnboardingWizard({ isOpen, onComplete, onSkip }: OnboardingWizar
                   value={newComAmount}
                   onChange={(e) => setNewComAmount(e.target.value)}
                   className="px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-charcoal-700 mb-0.5">
+                  Due Date *
+                </label>
+                <input
+                  type="date"
+                  aria-label="Commitment due date"
+                  value={newComDueDate}
+                  onChange={(e) => setNewComDueDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-[#E9E1D3] rounded-lg"
                 />
               </div>
               <button

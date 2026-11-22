@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Calendar, CheckCircle, Circle, AlertCircle, Plus } from 'lucide-react';
+import { Calendar, CheckCircle, Circle, AlertCircle, Plus, Pencil } from 'lucide-react';
 import { Commitment } from '@/types';
 import { formatINR } from '@/lib/currency';
+import { formatCommitmentDueDate, isCommitmentOverdue } from '@/lib/commitments';
 
 interface CommitmentsTimelineProps {
   commitments: Commitment[];
@@ -16,7 +17,12 @@ export function CommitmentsTimeline({
   onTogglePaid,
   onOpenSettings
 }: CommitmentsTimelineProps) {
-  const sorted = [...commitments].sort((a, b) => a.dueDay - b.dueDay);
+  const sorted = [...commitments].sort((a, b) => {
+    if (a.dueDate && b.dueDate) {
+      return a.dueDate.localeCompare(b.dueDate);
+    }
+    return (a.dueDay || 1) - (b.dueDay || 1);
+  });
   const unpaidTotal = commitments.filter(c => !c.isPaid).reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
   const totalMonthlyCommitments = commitments.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
 
@@ -59,57 +65,79 @@ export function CommitmentsTimeline({
         </div>
       ) : (
         <div className="space-y-2.5">
-          {sorted.map(c => (
-            <div
-              key={c.id}
-              className={`flex items-center justify-between p-3 rounded-xl border transition-smooth ${
-                c.isPaid
-                  ? 'bg-gray-50 border-gray-200 opacity-60'
-                  : c.isEssential
-                  ? 'bg-forest-50/50 border-forest-200'
-                  : 'bg-white border-[#E9E1D3]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => onTogglePaid(c.id)}
-                  title={c.isPaid ? 'Mark as unpaid' : 'Mark as paid'}
-                  className="text-forest-700 hover:text-forest-900 transition-smooth"
-                >
-                  {c.isPaid ? (
-                    <CheckCircle className="w-5 h-5 text-forest-700" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-gray-400 hover:text-forest-600" />
-                  )}
-                </button>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold ${c.isPaid ? 'line-through text-gray-500' : 'text-charcoal-900'}`}>
-                      {c.name}
-                    </span>
-                    {c.isEssential && (
-                      <span className="text-[9px] bg-red-100 text-red-800 font-semibold px-1.5 py-0.2 rounded">
-                        Essential
-                      </span>
+          {sorted.map(c => {
+            const overdue = isCommitmentOverdue(c);
+            return (
+              <div
+                key={c.id}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-smooth ${
+                  c.isPaid
+                    ? 'bg-gray-50 border-gray-200 opacity-60'
+                    : overdue
+                    ? 'bg-red-50/60 border-red-300'
+                    : c.isEssential
+                    ? 'bg-forest-50/50 border-forest-200'
+                    : 'bg-white border-[#E9E1D3]'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => onTogglePaid(c.id)}
+                    title={c.isPaid ? 'Mark as unpaid' : 'Mark as paid'}
+                    className="text-forest-700 hover:text-forest-900 transition-smooth shrink-0"
+                  >
+                    {c.isPaid ? (
+                      <CheckCircle className="w-5 h-5 text-forest-700" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-gray-400 hover:text-forest-600" />
                     )}
+                  </button>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs font-semibold truncate ${c.isPaid ? 'line-through text-gray-500' : 'text-charcoal-900'}`}>
+                        {c.name}
+                      </span>
+                      {c.isEssential && (
+                        <span className="text-[9px] bg-red-100 text-red-800 font-semibold px-1.5 py-0.2 rounded">
+                          Essential
+                        </span>
+                      )}
+                      {overdue && (
+                        <span className="text-[9px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded inline-flex items-center gap-1">
+                          <AlertCircle className="w-2.5 h-2.5" /> Overdue
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-0.5">
+                      Due: <span className="font-medium text-charcoal-700">{formatCommitmentDueDate(c.dueDate, c.dueDay)}</span>
+                      {c.category ? ` • ${c.category}` : ''}
+                      {c.notes ? ` • ${c.notes}` : ''}
+                    </p>
                   </div>
-                  <p className="text-[10px] text-gray-500">
-                    Due Day {c.dueDay} of each month {c.notes ? `• ${c.notes}` : ''}
-                  </p>
+                </div>
+
+                <div className="text-right shrink-0 ml-3">
+                  <span className={`text-xs font-bold block ${c.isPaid ? 'text-gray-400' : 'text-forest-900'}`}>
+                    {formatINR(c.amount)}
+                  </span>
+                  <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                    <span className="text-[10px] text-gray-500 font-medium">
+                      {c.isPaid ? 'Paid' : 'Unpaid'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={onOpenSettings}
+                      title="Edit commitment"
+                      className="text-gray-400 hover:text-forest-700 transition-smooth"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              <div className="text-right">
-                <span className={`text-xs font-bold ${c.isPaid ? 'text-gray-400' : 'text-forest-900'}`}>
-                  {formatINR(c.amount)}
-                </span>
-                <p className="text-[10px] text-gray-500 font-medium">
-                  {c.isPaid ? 'Paid' : 'Unpaid'}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

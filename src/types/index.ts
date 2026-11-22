@@ -35,7 +35,8 @@ export interface Commitment {
   id: string;
   name: string;
   amount: number;
-  dueDay: number; // 1 - 31 day of month
+  dueDate?: string; // YYYY-MM-DD exact user-selected due date (e.g. '2026-12-05')
+  dueDay: number; // 1 - 31 day of month (synchronized with dueDate)
   recurrence: RecurrenceType;
   isEssential: boolean;
   isPaid: boolean;
