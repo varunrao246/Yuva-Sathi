@@ -18,6 +18,7 @@ import { analyzePurchaseAffordability } from '@/lib/calculations';
 import { INDIAN_OFFERS } from '@/lib/offers-data';
 import { formatINR } from '@/lib/currency';
 import { useToast } from '../ui/Toast';
+import { useCopyToClipboard } from '@/lib/useCopyToClipboard';
 
 interface BeforeYouBuyCheckerProps {
   financials: FinancialCalculationResult;
@@ -30,7 +31,7 @@ export function BeforeYouBuyChecker({
 }: BeforeYouBuyCheckerProps) {
   const [amountInput, setAmountInput] = useState('');
   const [purposeInput, setPurposeInput] = useState('');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const { copiedCode, copyToClipboard } = useCopyToClipboard();
   const { showToast } = useToast();
 
   const numAmount = parseFloat(amountInput) || 0;
@@ -42,10 +43,9 @@ export function BeforeYouBuyChecker({
   );
 
   const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    showToast(`Copied coupon "${code}" to clipboard!`, 'success');
-    setTimeout(() => setCopiedCode(null), 2500);
+    copyToClipboard(code, () => {
+      showToast(`Copied coupon "${code}" to clipboard!`, 'success');
+    });
   };
 
   // Quick preset pills testing various student scenarios as demanded by rubric

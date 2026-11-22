@@ -194,3 +194,20 @@ export type NavTab =
   | 'purchase-check'
   | 'offers';
 
+/**
+ * Determines whether a navigation target tab should be highlighted as active,
+ * accounting for nested/aliased tabs grouped under 'my-money'.
+ */
+export function isNavTabActive(currentTab: NavTab, targetTab: NavTab): boolean {
+  if (currentTab === targetTab) return true;
+  if (targetTab === 'my-money') {
+    return (
+      currentTab === 'transactions' ||
+      currentTab === 'purchase-check' ||
+      currentTab === 'offers'
+    );
+  }
+  return false;
+}
+
+

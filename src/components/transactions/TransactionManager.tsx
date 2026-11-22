@@ -17,11 +17,13 @@ import { useToast } from '../ui/Toast';
 
 interface TransactionManagerProps {
   transactions: Transaction[];
-  onAddTransaction: (tx: Omit<Transaction, 'id'>) => void;
-  onUpdateTransaction?: (id: string, tx: Partial<Transaction>) => void;
   onDeleteTransaction: (id: string) => void;
   onOpenAddModal: () => void;
   onEditTransaction?: (tx: Transaction) => void;
+  /** Optional legacy callback for callers providing direct transaction addition */
+  onAddTransaction?: (tx: Omit<Transaction, 'id'>) => void;
+  /** Optional legacy callback for callers providing direct transaction mutation */
+  onUpdateTransaction?: (id: string, tx: Partial<Transaction>) => void;
 }
 
 const CATEGORIES: (ExpenseCategory | 'All')[] = [

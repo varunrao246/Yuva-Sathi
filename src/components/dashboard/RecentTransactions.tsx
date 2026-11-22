@@ -90,7 +90,7 @@ export function RecentTransactions({
                 </span>
                 <button
                   onClick={() => onDeleteTransaction(t.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1 rounded transition-smooth"
+                  className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1 rounded transition-smooth"
                   title="Delete transaction"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

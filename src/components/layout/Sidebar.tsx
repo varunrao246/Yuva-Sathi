@@ -11,7 +11,7 @@ import {
   Sliders,
   ShieldCheck
 } from 'lucide-react';
-import { NavTab } from '@/types';
+import { NavTab, isNavTabActive } from '@/types';
 export type { NavTab };
 
 interface SidebarProps {
@@ -78,12 +78,7 @@ export function Sidebar({ activeTab, onSelectTab }: SidebarProps) {
       <nav className="flex-1 space-y-1">
         {navItems.map(item => {
           const Icon = item.icon;
-          const isActive =
-            activeTab === item.id ||
-            (item.id === 'my-money' &&
-              (activeTab === 'transactions' ||
-                activeTab === 'purchase-check' ||
-                activeTab === 'offers'));
+          const isActive = isNavTabActive(activeTab, item.id);
 
           return (
             <button

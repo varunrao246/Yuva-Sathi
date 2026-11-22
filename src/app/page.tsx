@@ -28,7 +28,16 @@ import { OpportunitiesExplorer } from '@/components/opportunities/OpportunitiesE
 import { MyMoneyHub } from '@/components/money/MyMoneyHub';
 import { StudentOpportunitySummary } from '@/components/dashboard/StudentOpportunitySummary';
 import { useToast } from '@/components/ui/Toast';
-import { NavTab, Transaction, ExpenseCategory } from '@/types';
+import {
+  NavTab,
+  Transaction,
+  ExpenseCategory,
+  IncomeConfig,
+  Commitment,
+  CreditCard,
+  SavingsGoal,
+  isNavTabActive,
+} from '@/types';
 import {
   Sparkles,
   ShieldCheck,
@@ -107,10 +116,10 @@ export default function HomePage() {
   };
 
   const handleOnboardingComplete = (data: {
-    income: any;
-    commitments: any[];
-    creditCards: any[];
-    savingsGoals: any[];
+    income: IncomeConfig;
+    commitments: Commitment[];
+    creditCards: CreditCard[];
+    savingsGoals: SavingsGoal[];
   }) => {
     updateIncome(data.income);
     for (const c of data.commitments) addCommitment(c);
@@ -327,10 +336,7 @@ export default function HomePage() {
           )}
 
           {/* TAB 2: MY MONEY (Unified Financial Suite) */}
-          {(activeTab === 'my-money' ||
-            activeTab === 'transactions' ||
-            activeTab === 'purchase-check' ||
-            activeTab === 'offers') && (
+          {isNavTabActive(activeTab, 'my-money') && (
             <MyMoneyHub
               initialSubTab={
                 activeTab === 'purchase-check'

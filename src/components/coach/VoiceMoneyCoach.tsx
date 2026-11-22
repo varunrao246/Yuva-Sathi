@@ -3,6 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, Sparkles, RefreshCw, AlertCircle, Play, Pause, ChevronRight } from 'lucide-react';
 import { FinancialCalculationResult, Transaction, Commitment, SavingsGoal } from '@/types';
+import {
+  ISpeechRecognition,
+  IWindowWithSpeech,
+  ISpeechRecognitionEvent,
+  ISpeechRecognitionErrorEvent,
+} from '@/types/speech';
 import { formatINR } from '@/lib/currency';
 
 interface VoiceMoneyCoachProps {
@@ -30,7 +36,8 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const transcriptRef = useRef<string>('');
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   // Check Web Speech API support
@@ -56,6 +63,7 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
     setErrorMessage('');
     setResponse('');
     setTranscript('');
+    transcriptRef.current = '';
     stopSpeaking();
 
     if (!isSpeechSupported) {
@@ -65,8 +73,12 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
     }
 
     try {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+      const speechWindow = window as unknown as IWindowWithSpeech;
+      const SpeechRecognitionClass = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+      if (!SpeechRecognitionClass) {
+        throw new Error('Speech recognition not available in this environment');
+      }
+      const recognition = new SpeechRecognitionClass();
       recognition.lang = 'en-IN';
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
@@ -75,15 +87,16 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
         setStatus('listening');
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: ISpeechRecognitionEvent) => {
         let currentTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           currentTranscript += event.results[i][0].transcript;
         }
+        transcriptRef.current = currentTranscript;
         setTranscript(currentTranscript);
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: ISpeechRecognitionErrorEvent) => {
         console.error('[Voice Speech Error]', event.error);
         if (event.error === 'not-allowed') {
           setErrorMessage('Microphone access was denied. Please allow microphone permissions in browser settings.');
@@ -94,8 +107,9 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
       };
 
       recognition.onend = () => {
-        if (transcript.trim().length > 0) {
-          processVoiceQuery(transcript);
+        const recordedQuery = transcriptRef.current.trim();
+        if (recordedQuery.length > 0) {
+          processVoiceQuery(recordedQuery);
         } else {
           setStatus('idle');
         }
@@ -103,9 +117,10 @@ export const VoiceMoneyCoach: React.FC<VoiceMoneyCoachProps> = ({
 
       recognitionRef.current = recognition;
       recognition.start();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Voice Start Error]', err);
-      setErrorMessage(err.message || 'Failed to start microphone');
+      const msg = err instanceof Error ? err.message : 'Failed to start microphone';
+      setErrorMessage(msg);
       setStatus('error');
     }
   };

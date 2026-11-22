@@ -9,7 +9,7 @@ import {
   PiggyBank,
   Bot
 } from 'lucide-react';
-import { NavTab } from '@/types';
+import { NavTab, isNavTabActive } from '@/types';
 
 interface MobileNavProps {
   activeTab: NavTab;
@@ -30,12 +30,7 @@ export function MobileNav({ activeTab, onSelectTab }: MobileNavProps) {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5DEC9] py-1.5 px-2 flex items-center justify-around shadow-lg">
       {navItems.map(item => {
         const Icon = item.icon;
-        const isActive =
-          activeTab === item.id ||
-          (item.id === 'my-money' &&
-            (activeTab === 'transactions' ||
-              activeTab === 'purchase-check' ||
-              activeTab === 'offers'));
+        const isActive = isNavTabActive(activeTab, item.id);
 
         return (
           <button

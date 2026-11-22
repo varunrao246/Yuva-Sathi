@@ -33,8 +33,10 @@ export const StudentOpportunitySummary: React.FC<StudentOpportunitySummaryProps>
   onNavigateToOpportunities,
   onNavigateToSavings,
 }) => {
-  // Top upcoming scholarship deadlines
-  const upcomingScholarships = SCHOLARSHIPS_DATA.slice(0, 2);
+  // Top upcoming scholarship deadlines sorted chronologically
+  const upcomingScholarships = [...SCHOLARSHIPS_DATA]
+    .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+    .slice(0, 2);
   const featuredOpportunities = OPPORTUNITIES_DATA.slice(0, 2);
   const primaryGoal = savingsGoals[0];
 

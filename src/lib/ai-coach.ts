@@ -40,7 +40,7 @@ export function getLocalCoachResponse(
   }
 
   // 2. Weekly budget request
-  if (q.includes('weekly budget') || q.includes('weekly') || q.includes('week')) {
+  if (/\b(weekly budget|weekly plan|this week|weekly)\b/i.test(q)) {
     const weeklySafe = Math.round(financials.safeToSpendToday * 7);
     const weeklyBase = Math.round(financials.dailyBudget * 7);
 

@@ -106,6 +106,21 @@ Ask me anything or choose a suggested question below!`,
 
       const data = await res.json();
 
+      if (!res.ok) {
+        const errorMsg = data.error || `Server returned error (${res.status})`;
+        showToast(errorMsg, 'error');
+        const errBotMsg: ChatMessage = {
+          id: `bot_${Date.now()}`,
+          role: 'assistant',
+          content: `⚠️ **Notice:** ${errorMsg}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isOfflineFallback: true,
+          suggestedPrompts: DEFAULT_PROMPTS,
+        };
+        setMessages(prev => [...prev, errBotMsg]);
+        return;
+      }
+
       if (data.source) {
         setActiveEngine(data.source);
       }

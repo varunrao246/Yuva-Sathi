@@ -58,7 +58,7 @@ export function SmartInsights({
           iconColor: 'text-red-600',
           bgColor: 'bg-red-50/70 border-red-200',
           title: 'Credit Dues Reserved',
-          description: `₹${formatINR(financials.creditCardTotalDue)} is automatically quarantined from your safe-to-spend so you never incur credit interest charges.`,
+          description: `${formatINR(financials.creditCardTotalDue)} is automatically quarantined from your safe-to-spend so you never incur credit interest charges.`,
         }
       : {
           id: 'ins-3',

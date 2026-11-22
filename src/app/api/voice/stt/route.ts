@@ -9,11 +9,16 @@ export async function POST(req: NextRequest) {
     let audioBuffer: Buffer | null = null;
     let audioFormat = 'audio/wav';
 
+    const MAX_AUDIO_BYTES = 5 * 1024 * 1024; // 5 MB upper bound to protect memory
+
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const file = formData.get('audio') as File | null;
       if (!file) {
         return NextResponse.json({ error: 'No audio file provided in form-data' }, { status: 400 });
+      }
+      if (file.size > MAX_AUDIO_BYTES) {
+        return NextResponse.json({ error: 'Audio file too large (max 5 MB allowed)' }, { status: 413 });
       }
       const arrayBuffer = await file.arrayBuffer();
       audioBuffer = Buffer.from(arrayBuffer);
@@ -21,6 +26,9 @@ export async function POST(req: NextRequest) {
     } else {
       const json = await req.json().catch(() => null);
       if (json && json.audioBase64) {
+        if (typeof json.audioBase64 === 'string' && json.audioBase64.length > 7 * 1024 * 1024) {
+          return NextResponse.json({ error: 'Audio payload too large (max 5 MB allowed)' }, { status: 413 });
+        }
         audioBuffer = Buffer.from(json.audioBase64, 'base64');
         audioFormat = json.format || 'audio/wav';
       }

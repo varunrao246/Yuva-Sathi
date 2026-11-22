@@ -17,12 +17,13 @@ import { INDIAN_OFFERS } from '@/lib/offers-data';
 import { OfferItem, OfferVerificationStatus } from '@/types';
 import { formatINR } from '@/lib/currency';
 import { useToast } from '../ui/Toast';
+import { useCopyToClipboard } from '@/lib/useCopyToClipboard';
 
 export function OffersExplorer() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<'ALL' | OfferVerificationStatus>('ALL');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const { copiedCode, copyToClipboard } = useCopyToClipboard();
   const { showToast } = useToast();
 
   const categories = [
@@ -39,10 +40,9 @@ export function OffersExplorer() {
   ];
 
   const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    showToast(`Copied code "${code}"!`, 'success');
-    setTimeout(() => setCopiedCode(null), 2500);
+    copyToClipboard(code, () => {
+      showToast(`Copied code "${code}"!`, 'success');
+    });
   };
 
   const filtered = INDIAN_OFFERS.filter(offer => {

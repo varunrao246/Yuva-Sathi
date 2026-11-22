@@ -57,12 +57,34 @@ export async function fetchCloudUserData(
       };
     }
 
-    // 2. Fetch Transactions
-    const { data: txRows } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('transaction_date', { ascending: false });
+    // 2. Fetch Transactions, Commitments, Savings Goals, and Credit Cards in parallel
+    const [
+      { data: txRows },
+      { data: comRows },
+      { data: sgRows },
+      { data: ccRows }
+    ] = await Promise.all([
+      supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('transaction_date', { ascending: false }),
+      supabase
+        .from('commitments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('due_day', { ascending: true }),
+      supabase
+        .from('savings_goals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('target_date', { ascending: true }),
+      supabase
+        .from('credit_cards')
+        .select('*')
+        .eq('user_id', userId)
+        .order('due_day', { ascending: true }),
+    ]);
 
     const transactions: Transaction[] = (txRows || []).map(r => ({
       id: r.id,
@@ -74,13 +96,6 @@ export async function fetchCloudUserData(
       location: r.location || undefined,
       paymentMethod: r.payment_method,
     }));
-
-    // 3. Fetch Commitments
-    const { data: comRows } = await supabase
-      .from('commitments')
-      .select('*')
-      .eq('user_id', userId)
-      .order('due_day', { ascending: true });
 
     const commitments: Commitment[] = (comRows || []).map(r => ({
       id: r.id,
@@ -94,13 +109,6 @@ export async function fetchCloudUserData(
       notes: r.notes || undefined,
     }));
 
-    // 4. Fetch Savings Goals
-    const { data: sgRows } = await supabase
-      .from('savings_goals')
-      .select('*')
-      .eq('user_id', userId)
-      .order('target_date', { ascending: true });
-
     const savingsGoals: SavingsGoal[] = (sgRows || []).map(r => ({
       id: r.id,
       name: r.title,
@@ -110,13 +118,6 @@ export async function fetchCloudUserData(
       category: r.category,
       isCompleted: r.is_completed,
     }));
-
-    // 5. Fetch Credit Cards
-    const { data: ccRows } = await supabase
-      .from('credit_cards')
-      .select('*')
-      .eq('user_id', userId)
-      .order('due_day', { ascending: true });
 
     const creditCards: CreditCard[] = (ccRows || []).map(r => ({
       id: r.id,

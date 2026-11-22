@@ -18,7 +18,7 @@ import {
   LayoutDashboard,
   Wallet
 } from 'lucide-react';
-import { NavTab } from '@/types';
+import { NavTab, isNavTabActive } from '@/types';
 import { formatINR } from '@/lib/currency';
 import { useYuvaStore } from '@/lib/storage';
 import { useToast } from '../ui/Toast';
@@ -97,12 +97,7 @@ export function Header({
         {/* Center: Desktop Fintech Navigation */}
         <nav className="hidden lg:flex items-center gap-1 bg-[#FAF7F0] border border-[#E5DEC9] p-1 rounded-xl">
           {navLinks.map((link) => {
-            const isSelected =
-              activeTab === link.id ||
-              (link.id === 'my-money' &&
-                (activeTab === 'transactions' ||
-                  activeTab === 'purchase-check' ||
-                  activeTab === 'offers'));
+            const isSelected = isNavTabActive(activeTab, link.id);
 
             return (
               <button

@@ -20,8 +20,38 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+const DEFAULT_EMPTY_FINANCIALS: FinancialCalculationResult = {
+  totalMonthlyIncome: 0,
+  totalMonthlyExpenses: 0,
+  currentBalance: 0,
+  totalCommitments: 0,
+  paidCommitments: 0,
+  unpaidCommitments: 0,
+  unpaidEssentialCommitments: 0,
+  unpaidOptionalCommitments: 0,
+  safeToSpendToday: 0,
+  dailyBudget: 0,
+  currentDayOfMonth: 1,
+  daysInMonth: 30,
+  daysRemainingInMonth: 1,
+  spendingPace: 'on_track',
+  monthEndForecastBalance: 0,
+  creditCardTotalDue: 0,
+  discretionaryFunds: 0,
+  totalSavedInGoals: 0,
+  targetSavingsTotal: 0,
+};
+
+interface CoachRequestBody {
+  query: string;
+  financials: FinancialCalculationResult;
+  transactions: Transaction[];
+  commitments: Commitment[];
+  savingsGoals: SavingsGoal[];
+}
+
 export async function POST(req: NextRequest) {
-  let body: any = null;
+  let body: Partial<CoachRequestBody> | null = null;
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 'localhost';
     if (!checkRateLimit(ip)) {
@@ -31,18 +61,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    body = await req.json().catch(() => null);
+    body = (await req.json().catch(() => null)) as Partial<CoachRequestBody> | null;
     if (!body) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const { query, financials, transactions, commitments, savingsGoals } = body as {
-      query: string;
-      financials: FinancialCalculationResult;
-      transactions: Transaction[];
-      commitments: Commitment[];
-      savingsGoals: SavingsGoal[];
-    };
+    const { query, financials, transactions, commitments, savingsGoals } = body;
 
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
@@ -54,11 +78,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Query is too long (max 500 characters)' }, { status: 400 });
     }
 
+    const safeFinancials: FinancialCalculationResult = financials || DEFAULT_EMPTY_FINANCIALS;
+
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     // If Gemini API Key is NOT configured, use our grounded local advisor fallback
     if (!apiKey) {
-      const fallback = getLocalCoachResponse(sanitizedQuery, financials, transactions, commitments, savingsGoals);
+      const fallback = getLocalCoachResponse(
+        sanitizedQuery,
+        safeFinancials,
+        transactions || [],
+        commitments || [],
+        savingsGoals || []
+      );
       return NextResponse.json({
         response: fallback.response,
         suggestedPrompts: fallback.suggestedPrompts,
@@ -126,13 +158,14 @@ INSTRUCTIONS:
       isOfflineFallback: false,
       source: `Google Gemini (${modelName} Live AI)`,
     });
-  } catch (error: any) {
-    console.error('[Yuva Sathi API] Gemini call error or timeout:', error?.message || error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('[Yuva Sathi API] Gemini call error or timeout:', errorMsg);
 
     // Fall back safely to local engine on API error or timeout
     const fallback = getLocalCoachResponse(
       body?.query || '',
-      body?.financials || {},
+      body?.financials || DEFAULT_EMPTY_FINANCIALS,
       body?.transactions || [],
       body?.commitments || [],
       body?.savingsGoals || []
@@ -143,7 +176,7 @@ INSTRUCTIONS:
       suggestedPrompts: fallback.suggestedPrompts,
       isOfflineFallback: true,
       source: 'Local Rule Engine (Gemini fallback)',
-      errorDetails: error?.message ? String(error.message).substring(0, 80) : 'API Error',
+      errorDetails: errorMsg.substring(0, 80),
     });
   }
 }

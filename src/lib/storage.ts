@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   UserProfile,
   IncomeConfig,
@@ -90,6 +90,22 @@ function setStoredItem<T>(key: string, value: T): void {
   }
 }
 
+/**
+ * Batches multiple localStorage writes and dispatches a single SYNC_EVENT.
+ * Prevents multiple cascading store updates and re-render storms.
+ */
+function setStoredItems(entries: Record<string, unknown>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    for (const [key, value] of Object.entries(entries)) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+    window.dispatchEvent(new Event(SYNC_EVENT));
+  } catch (err) {
+    console.error(`[Yuva Sathi Storage] Failed writing batch to storage`, err);
+  }
+}
+
 export function initializeStoreIfEmpty(): void {
   if (typeof window === 'undefined') return;
 
@@ -113,14 +129,16 @@ export function initializeStoreIfEmpty(): void {
 }
 
 export function resetDemoStudentData(): void {
-  setStoredItem(STORAGE_KEYS.DEMO_PROFILE, DEMO_USER_PROFILE);
-  setStoredItem(STORAGE_KEYS.DEMO_INCOME, DEMO_INCOME_CONFIG);
-  setStoredItem(STORAGE_KEYS.DEMO_COMMITMENTS, DEMO_COMMITMENTS);
-  setStoredItem(STORAGE_KEYS.DEMO_CARDS, DEMO_CREDIT_CARDS);
-  setStoredItem(STORAGE_KEYS.DEMO_SAVINGS, DEMO_SAVINGS_GOALS);
-  setStoredItem(STORAGE_KEYS.DEMO_TRANSACTIONS, DEMO_TRANSACTIONS);
-  setStoredItem(STORAGE_KEYS.DEMO_SCHOLARSHIPS, DEFAULT_DEMO_SCHOLARSHIPS);
-  setStoredItem(STORAGE_KEYS.DEMO_OPPORTUNITIES, DEFAULT_DEMO_OPPORTUNITIES);
+  setStoredItems({
+    [STORAGE_KEYS.DEMO_PROFILE]: DEMO_USER_PROFILE,
+    [STORAGE_KEYS.DEMO_INCOME]: DEMO_INCOME_CONFIG,
+    [STORAGE_KEYS.DEMO_COMMITMENTS]: DEMO_COMMITMENTS,
+    [STORAGE_KEYS.DEMO_CARDS]: DEMO_CREDIT_CARDS,
+    [STORAGE_KEYS.DEMO_SAVINGS]: DEMO_SAVINGS_GOALS,
+    [STORAGE_KEYS.DEMO_TRANSACTIONS]: DEMO_TRANSACTIONS,
+    [STORAGE_KEYS.DEMO_SCHOLARSHIPS]: DEFAULT_DEMO_SCHOLARSHIPS,
+    [STORAGE_KEYS.DEMO_OPPORTUNITIES]: DEFAULT_DEMO_OPPORTUNITIES,
+  });
 }
 
 export function useYuvaStore() {
@@ -358,14 +376,16 @@ export function useYuvaStore() {
       incomeFrequency: 'monthly',
       allowanceReceivedDate: 1,
     };
-    setStoredItem(STORAGE_KEYS.USER_PROFILE, user);
-    setStoredItem(STORAGE_KEYS.USER_INCOME, emptyIncome);
-    setStoredItem(STORAGE_KEYS.USER_COMMITMENTS, []);
-    setStoredItem(STORAGE_KEYS.USER_CARDS, []);
-    setStoredItem(STORAGE_KEYS.USER_SAVINGS, []);
-    setStoredItem(STORAGE_KEYS.USER_TRANSACTIONS, []);
-    setStoredItem(STORAGE_KEYS.MODE, 'user');
-    setStoredItem(STORAGE_KEYS.IS_LOGGED_IN, true);
+    setStoredItems({
+      [STORAGE_KEYS.USER_PROFILE]: user,
+      [STORAGE_KEYS.USER_INCOME]: emptyIncome,
+      [STORAGE_KEYS.USER_COMMITMENTS]: [],
+      [STORAGE_KEYS.USER_CARDS]: [],
+      [STORAGE_KEYS.USER_SAVINGS]: [],
+      [STORAGE_KEYS.USER_TRANSACTIONS]: [],
+      [STORAGE_KEYS.MODE]: 'user',
+      [STORAGE_KEYS.IS_LOGGED_IN]: true,
+    });
     syncToCloud((supabase, uid) => saveProfileToCloud(supabase, uid, user, emptyIncome));
   };
 
@@ -409,13 +429,15 @@ export function useYuvaStore() {
     setStoredItem(opportunitiesKey, updated);
   };
 
-  const financials: FinancialCalculationResult = calculateFinancials(
-    income,
-    commitments,
-    creditCards,
-    savingsGoals,
-    transactions
-  );
+  const financials: FinancialCalculationResult = useMemo(() => {
+    return calculateFinancials(
+      income,
+      commitments,
+      creditCards,
+      savingsGoals,
+      transactions
+    );
+  }, [income, commitments, creditCards, savingsGoals, transactions]);
 
   return {
     isLoaded,
