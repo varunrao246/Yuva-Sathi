@@ -10,7 +10,7 @@
 - 🌐 **Live Web Application:** [https://yuva-sathi-three.vercel.app](https://yuva-sathi-three.vercel.app)
 - 🤖 **Telegram Bot:** [@YuvaSathi_bot](https://t.me/YuvaSathi_bot)
 - 🩺 **Live Integration Health:** [https://yuva-sathi-three.vercel.app/api/integrations/status](https://yuva-sathi-three.vercel.app/api/integrations/status)
-- 💻 **Target GitHub Repository:** [https://github.com/varunrao246/yuva-sathi](https://github.com/varunrao246/yuva-sathi)
+- 💻 **Target GitHub Repository:** [https://github.com/varunrao246/Yuva-Sathi](https://github.com/varunrao246/Yuva-Sathi)
 
 ---
 
